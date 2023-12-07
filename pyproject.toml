@@ -1,0 +1,72 @@
+[tool.poetry]
+name = "lppy"
+version = "0.1.0"
+description = "Python bindings for Loupe Deck devices"
+authors = ["Dominik Dlugajczyk <msocek@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pyserial-asyncio = "^0.6"
+
+[tool.poetry.group.dev.dependencies]
+icecream = "^2.1.3"
+ipython = "^8.2.0"
+ipdb = "^0.13.9"
+pytest-mock = "^3.8.2"
+pytest-cov = "^3.0.0"
+python-lsp-server = {extras = ["all"], version = "^1.7.4"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+line_length = 99
+known_first_party = [ "lppy" ]
+multi_line_output = 3
+sections = [ "FUTURE", "STDLIB", "OTHER", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+force_single_line = true
+default_section = "OTHER"
+
+[tool.black]
+line_length = 99
+target-version = [ "py38" ]
+ignore = [ "W503", "W504" ]
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report term:skip-covered --cov-report html --no-cov-on-fail -vv --ff -x lppy"
+asyncio_mode = "auto"
+markers = [
+    "integration: all tests which are needing of external services, like database or appnexus api", ]
+norecursedirs = [
+    ".cache",
+    ".git",
+    ".idea",
+    "bin",
+    "*migrations*",
+    "spa",
+    "static",
+    "var",
+    "docker",
+    "common" ]
+filterwarnings = [
+    "error::RuntimeWarning",
+    "ignore:SelectableGroups dict interface is deprecated. Use select.:DeprecationWarning",
+    "ignore:The hookimpl CovPlugin.* uses old-style configuration options.*:DeprecationWarning",
+]
+[tool.coverage.run]
+branch = true
+omit = [
+    "quackquack/*",
+    "*/tests/*",
+    "*/test_*/*",
+    "*/versions/*",
+    "*/testing.py",
+    "*/settings/*",
+    "*/app/*",
+    "*/admin.py",
+    "*/.cache/*",
+    "/home/user/*",
+    "*/.cache/pypoetry/*",
+    "conftest.py"]
