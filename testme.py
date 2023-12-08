@@ -6,31 +6,25 @@ from signal import signal
 
 from icecream import ic
 from icecream import install
+from lppy.daemon.app import Application
+from lppy.driver.configuration import Configuration
 from lppy.driver.devices import LoupeDeckLive
 
 install()
 ic.configureOutput(includeContext=True)
 
-PATH = "/dev/ttyACM0"
-
-lp = LoupeDeckLive()
+devices = []
 
 
 async def main():
-    await lp.connect(PATH)
-    print("Connected")
-    await lp.read()
-    return True
+    app = Application()
+    for signalCode in [SIGINT, SIGTERM]:
+        signal(signalCode, app.exit_application)
 
-
-def stopMe(*args, **kwargs):
-    print("\rExiting...")
-    lp.state = False
+    for task in await app.init():
+        await task
 
 
 if __name__ == "__main__":
     loop = get_event_loop()
-    for signalCode in [SIGINT, SIGTERM]:
-        signal(signalCode, stopMe)
-    main_task = ensure_future(main())
-    loop.run_until_complete(main_task)
+    loop.run_until_complete(ensure_future(main()))

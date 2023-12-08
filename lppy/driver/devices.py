@@ -28,9 +28,11 @@ class LPDevice:
     retries = 2
     state = True
 
-    def __init__(self):
-        self.configuration = {
+    def __init__(self, configuration: dict):
+        self.configuration = configuration
+        self.conn_configuration = {
             "baudrate": 256000,
+            **self.configuration.get("connection", {})
         }
         self.reader: StreamReader | None = None
         self.writer: StreamWriter | None = None
@@ -43,11 +45,11 @@ class LPDevice:
             Commands.TOUCH_END: self.handle_touch_end,
         }
 
-    async def connect(self, path: str) -> bool:
+    async def connect(self) -> bool:
         for _ in range(self.retries):  # trie for 2 times
             try:
                 self.reader, self.writer = await wait_for(
-                    open_serial_connection(url=path, **self.configuration),
+                    open_serial_connection(url=self.configuration['url'], **self.conn_configuration),
                     timeout=self.timeout,
                 )
                 self.writer.write(HANDSHAKE)
