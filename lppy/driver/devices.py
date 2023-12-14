@@ -1,11 +1,16 @@
 from asyncio import StreamReader
 from asyncio import StreamWriter
+from asyncio import sleep
 from asyncio import wait_for
 from struct import pack
 from struct import unpack
 
-from lppy.driver.consts import Commands
+from PIL import Image
 from serial_asyncio import open_serial_connection
+
+from lppy.driver.action_resolvers import GraphicActionResolver
+from lppy.driver.consts import DISPLAY_IMAGE_MODE
+from lppy.driver.consts import Commands
 
 HANDSHAKE = b"""GET /index.html
 HTTP/1.1
@@ -27,13 +32,11 @@ class LPDevice:
     timeout = 1
     retries = 2
     state = True
+    display_mode = None
 
     def __init__(self, configuration: dict):
         self.configuration = configuration
-        self.conn_configuration = {
-            "baudrate": 256000,
-            **self.configuration.get("connection", {})
-        }
+        self.conn_configuration = {"baudrate": 256000, **self.configuration.get("connection", {})}
         self.reader: StreamReader | None = None
         self.writer: StreamWriter | None = None
         self.path = None
@@ -43,13 +46,57 @@ class LPDevice:
             Commands.KNOB_ROTATE: self.handle_knob_rotate,
             Commands.TOUCH: self.handle_touch,
             Commands.TOUCH_END: self.handle_touch_end,
+
+            Commands.FRAMEBUFF: self._debug_print,
         }
+        self.screen_buffers = {
+            0: self._new_image(),
+            1: self._new_image(),
+        }
+        self.current_buffer = 0
+        self.action_resolvers = [
+            GraphicActionResolver(self, "key1"),
+            GraphicActionResolver(self, "key2")
+        ]
+
+    def _new_image(self):
+        return Image.new(DISPLAY_IMAGE_MODE, (self.width, self.height), 'black')
+
+    async def repaint_buffer(self):
+        self.current_buffer = (self.current_buffer + 1) % 2
+        self.screen_buffers[self.current_buffer] = self._new_image()
+        for resolver in self.action_resolvers:
+            if resolver.can_be_painted:
+                image, box = resolver.draw_image()
+                self.screen_buffers[self.current_buffer].paste(image, box)
+
+        if self.screen_buffers[self.current_buffer] == self.screen_buffers[(self.current_buffer + 1) % 2]:
+            return # do not repaint the same image
+        # ---
+        imageBuff = self.screen_buffers[self.current_buffer].convert(self.display_mode).tobytes()
+        pixelCount = self.width * self.height * 2
+        if len(imageBuff) != pixelCount:
+            raise RuntimeError(
+                f"Expected buffer length of {pixelCount}, got {len(imageBuff)}!"
+            )
+
+        header = pack("!H", 0) + pack("!H", 0) + pack("!H", self.width) + pack("!H", self.height)
+        await self.write_command(Commands.FRAMEBUFF, bytearray(self.display_id + header + imageBuff))
+        # ---
+
+    async def repaint_task(self):
+        await self.repaint_buffer()
+        while self.state:
+            await sleep(0.1)
+            await self.repaint_buffer()
 
     async def connect(self) -> bool:
         for _ in range(self.retries):  # trie for 2 times
             try:
                 self.reader, self.writer = await wait_for(
-                    open_serial_connection(url=self.configuration['url'], **self.conn_configuration),
+                    open_serial_connection(
+                        url=self.configuration["url"], **self.conn_configuration
+                    ),
                     timeout=self.timeout,
                 )
                 self.writer.write(HANDSHAKE)
@@ -141,9 +188,13 @@ class LPDevice:
     def handle_touch_end(self, payload):
         ic(payload)
 
+    def _debug_print(self, payload):
+        ic(payload)
+
 
 class LoupeDeckLive(LPDevice):
     display_id = b"\x00M"
+    display_mode = 'BGR;16'
     width = 480
     height = 270
     subdisplays = {

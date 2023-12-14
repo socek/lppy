@@ -19,7 +19,7 @@ class Application:
             if await device.connect():
                 print(f"Device {device.configuration['url']} connected")
 
-        return [device.read() for device in self.devices]
+        return [device.read() for device in self.devices] + [device.repaint_task() for device in self.devices]
 
     def exit_application(self, *args, **kwargs):
         print("\rExiting...")

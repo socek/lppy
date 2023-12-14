@@ -1,5 +1,7 @@
 from enum import Enum
 
+DISPLAY_IMAGE_MODE = "RGB"
+
 
 class Commands(Enum):
     BUTTON_PRESS = 0x00

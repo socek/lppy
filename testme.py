@@ -1,3 +1,4 @@
+from asyncio import TaskGroup
 from asyncio import ensure_future
 from asyncio import get_event_loop
 from signal import SIGINT
@@ -6,6 +7,7 @@ from signal import signal
 
 from icecream import ic
 from icecream import install
+
 from lppy.daemon.app import Application
 from lppy.driver.configuration import Configuration
 from lppy.driver.devices import LoupeDeckLive
@@ -21,8 +23,9 @@ async def main():
     for signalCode in [SIGINT, SIGTERM]:
         signal(signalCode, app.exit_application)
 
-    for task in await app.init():
-        await task
+    async with TaskGroup() as tg:
+        for task in await app.init():
+            tg.create_task(task)
 
 
 if __name__ == "__main__":
