@@ -2,23 +2,29 @@ sample = {
     "devices": [
         {
             "url": "/dev/ttyACM0",
-            "knob1": {
-                "name": "Spotify",
-                "type": "pulseaudio:Sink",
-                "sinkName": "spotify",
-            },
-            "key1": {
-                "name": "Previous",
-                "type": "spotify:PreviousSong",
-            },
-            "key2": {
-                "name": "Play/Pause",
-                "type": "spotify:PlayPauseToggle",
-            },
-            "key3": {
-                "name": "Next",
-                "type": "spotify:NextSong",
-            },
+            "pages": {
+                "1": {
+                    "action_resolvers": {
+                        "knob1": {
+                            "name": "Spotify",
+                            "type": "pulseaudio:Sink",
+                            "sinkName": "spotify",
+                        },
+                        "key1": {
+                            "name": "Previous",
+                            "type": "spotify:PreviousSong",
+                        },
+                        "key2": {
+                            "name": "Play/Pause",
+                            "type": "spotify:PlayPauseToggle",
+                        },
+                        "key3": {
+                            "name": "Next",
+                            "type": "spotify:NextSong",
+                        }
+                    }
+                }
+            }
         }
     ]
 }

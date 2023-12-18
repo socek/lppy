@@ -12,7 +12,8 @@ class Application:
         self.devices = []
 
         for conf in configuration.get("devices", []):
-            lp = LoupeDeckLive(conf)
+            lp = LoupeDeckLive()
+            lp.setUp(conf)
             self.devices.append(lp)
 
         for device in self.devices:

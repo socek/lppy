@@ -15,8 +15,6 @@ from lppy.driver.devices import LoupeDeckLive
 install()
 ic.configureOutput(includeContext=True)
 
-devices = []
-
 
 async def main():
     app = Application()

@@ -8,33 +8,49 @@ from lppy.driver.consts import DISPLAY_IMAGE_MODE
 class ActionResolver:
     can_be_painted = False
 
-    def __init__(self, device):
-        self.device = device
+    def __init__(self):
+        self.page = None
+        self.name = None
+        self.configuration = None
+
+    def setUp(self, page, name, configuration):
+        self.page = page
+        self.name = name
+        self.configuration = configuration
+
+
+class Button(ActionResolver):
+    def press(self, payload):
+        pass
 
 
 class GraphicActionResolver(ActionResolver):
     can_be_painted = True
 
-    def __init__(self, device, screen: str | None):
-        self.device = device
-        self.screen = screen
-
     def paint_image(self, image: Image) -> Image:
-        Im = ImageDraw.Draw(image)
-        mf = ImageFont.truetype("/usr/share/fonts/TTF/Consolas-Bold.ttf", 14)
-        Im.text((10, 30), "Marilyn Monroe", fill="white", font=mf)
-        Im.text((10, 50), "Marilyn Monroe", fill="yellow", font=mf)
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype("/usr/share/fonts/TTF/Consolas-Regular.ttf", 12)
 
-    def draw_image(self):
-        if self.screen:
-            display = self.device.subdisplays[self.screen]
+        x, y, display_width, display_height = self._get_display_box()
+        _, _, text_width, text_height = draw.textbbox((0, 0), self.configuration["name"], font=font)
+
+        draw.text(((display_width-text_width)/2, (display_height-text_height)/2), self.configuration["name"], font=font, fill="white")
+
+    def _get_display_box(self):
+        display = self.page.device.subdisplays.get(self.name)
+        if display:
             x, y, width, height = display["x"], display["y"], display["width"], display["height"]
         else:
             x, y = 0, 0
-            width, height = self.device.width, self.device.height
+            width, height = self.page.device.width, self.page.device.height
+        return x, y, width, height
+
+    def draw_image(self):
+        x, y, width, height = self._get_display_box()
+
         image = Image.new(DISPLAY_IMAGE_MODE, (width, height))
         self.paint_image(image)
-        return image, (x, y, x+width, y+height)
+        return image, (x, y, x + width, y + height)
 
 
 class Knob(GraphicActionResolver):
@@ -45,14 +61,9 @@ class Knob(GraphicActionResolver):
         pass
 
 
-class Key(GraphicActionResolver):
+class ScreenKey(GraphicActionResolver):
     def touch(self, payload):
         pass
 
     def touch_end(self, payload):
-        pass
-
-
-class Button:
-    def press(self, payload):
         pass
