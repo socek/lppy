@@ -162,11 +162,11 @@ class LPDevice:
             assert result[0] == 130
             payloud_length = result[1] - 1
             payload = await wait_for(self.reader.read(payloud_length), timeout=self.timeout)
-            self.handle_command(payload)
+            await self.handle_command(payload)
 
-    def handle_command(self, payload):
+    async def handle_command(self, payload):
         command = payload[0]
-        self.handlers[Commands(command)](payload[1:])
+        await self.handlers[Commands(command)](payload[1:])
 
     def get_subscreen_name(self, x_axis: int, y_axis: int) -> str | None:
         for name, display in self.subdisplays.items():
@@ -178,23 +178,32 @@ class LPDevice:
                 return name
         return None
 
-    def handle_button_press(self, payload: bytearray):
-        for byte in payload:
-            ic(payload)
+    async def handle_button_press(self, payload: bytearray):
+        button_index = unpack("!H", payload[0:2])[0]
+        key = self.button_indexes[button_index]
+        command = 'unpress' if bool(payload[2]) else 'press'
+        await self.pages[self.current_page].handle_command(key, command)
 
-    def handle_knob_rotate(self, payload: bytearray):
-        ic(payload)
+    async def handle_knob_rotate(self, payload: bytearray):
+        button_index = unpack("!H", payload[0:2])[0]
+        key = self.button_indexes[button_index]
+        right = payload[2] == 1
+        command = 'rotate'
+        await self.pages[self.current_page].handle_command(key, command, right)
 
-    def handle_touch(self, payload: bytearray):
+    async def handle_touch(self, payload: bytearray):
         x_axis = unpack("!H", payload[2:4])[0]
         y_axis = unpack("!H", payload[4:6])[0]
         subscreen_name = self.get_subscreen_name(x_axis, y_axis)
-        ic(subscreen_name)
+        await self.pages[self.current_page].handle_command(subscreen_name, 'touch', x_axis, y_axis)
 
-    def handle_touch_end(self, payload):
-        ic(payload)
+    async def handle_touch_end(self, payload):
+        x_axis = unpack("!H", payload[2:4])[0]
+        y_axis = unpack("!H", payload[4:6])[0]
+        subscreen_name = self.get_subscreen_name(x_axis, y_axis)
+        await self.pages[self.current_page].handle_command(subscreen_name, 'touch', x_axis, y_axis)
 
-    def _debug_print(self, payload):
+    async def _debug_print(self, payload):
         ic(payload)
 
 
@@ -204,18 +213,6 @@ class LoupeDeckLive(LPDevice):
     width = 480
     height = 270
     subdisplays = {
-        "left": {
-            "x": 5,
-            "y": 0,
-            "width": 52,
-            "height": 265,
-        },
-        "right": {
-            "x": 425,
-            "y": 0,
-            "width": 52,
-            "height": 265,
-        },
         "key1": {
             "x": 64,
             "y": 0,
@@ -294,4 +291,51 @@ class LoupeDeckLive(LPDevice):
             "width": 64,
             "height": 90,
         },
+        "knob2": {
+            "x": 0,
+            "y": 91,
+            "width": 64,
+            "height": 90,
+        },
+        "knob3": {
+            "x": 0,
+            "y": 181,
+            "width": 64,
+            "height": 90,
+        },
+        "knob1": {
+            "x": 425,
+            "y": 0,
+            "width": 64,
+            "height": 90,
+        },
+        "knob2": {
+            "x": 425,
+            "y": 91,
+            "width": 64,
+            "height": 90,
+        },
+        "knob3": {
+            "x": 425,
+            "y": 181,
+            "width": 64,
+            "height": 90,
+        },
+    }
+
+    button_indexes = {
+        1: "knob1",
+        2: "knob2",
+        3: "knob3",
+        4: "knob4",
+        5: "knob5",
+        6: "knob6",
+        7: "main",
+        8: "button1",
+        9: "button2",
+        10: "button3",
+        11: "button4",
+        12: "button5",
+        13: "button6",
+        14: "button7",
     }

@@ -10,6 +10,11 @@ sample = {
                             "type": "pulseaudio:Sink",
                             "sinkName": "spotify",
                         },
+                        "knob2": {
+                            "name": "Home",
+                            "type": "pulseaudio:Sink",
+                            "sinkName": "spotify2",
+                        },
                         "key1": {
                             "name": "Previous",
                             "type": "spotify:PreviousSong",

@@ -20,8 +20,11 @@ class ActionResolver:
 
 
 class Button(ActionResolver):
-    def press(self, payload):
-        pass
+    async def press(self):
+        ic("press", self.name)
+
+    async def unpress(self):
+        ic("unpress", self.name)
 
 
 class GraphicActionResolver(ActionResolver):
@@ -54,16 +57,19 @@ class GraphicActionResolver(ActionResolver):
 
 
 class Knob(GraphicActionResolver):
-    def press(self, payload):
-        pass
+    async def press(self):
+        ic("press", self.name)
 
-    def rotate(self, payload):
-        pass
+    async def unpress(self):
+        ic("unpress", self.name)
+
+    async def rotate(self, right: bool):
+        ic("rotate", self.name, right)
 
 
 class ScreenKey(GraphicActionResolver):
-    def touch(self, payload):
-        pass
+    async def touch(self, x_axis: int, y_axis: int):
+        ic("touch", self.name, x_axis, y_axis)
 
-    def touch_end(self, payload):
-        pass
+    async def touch_end(self, x_axis: int, y_axis: int):
+        ic("touch end", self.name, x_axis, y_axis)
