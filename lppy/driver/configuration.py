@@ -2,6 +2,7 @@ sample = {
     "devices": [
         {
             "url": "/dev/ttyACM0",
+            "brightness": 10,
             "pages": {
                 "1": {
                     "action_resolvers": {

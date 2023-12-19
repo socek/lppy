@@ -115,6 +115,12 @@ class LPDevice:
                 print("Connection not responding, trying again...")
         return False
 
+    async def send_configuration(self):
+        brightness = self.configuration.get("brightness")
+        if brightness is not None:
+            value = pack("B", brightness)
+            await self.write_command(Commands.SET_BRIGHTNESS, bytearray(value))
+
     async def write(
         self,
         buff,
@@ -166,7 +172,7 @@ class LPDevice:
 
     async def handle_command(self, payload):
         command = payload[0]
-        await self.handlers[Commands(command)](payload[1:])
+        await self.handlers.get(Commands(command), self._debug_print)(payload[1:])
 
     def get_subscreen_name(self, x_axis: int, y_axis: int) -> str | None:
         for name, display in self.subdisplays.items():
@@ -181,27 +187,27 @@ class LPDevice:
     async def handle_button_press(self, payload: bytearray):
         button_index = unpack("!H", payload[0:2])[0]
         key = self.button_indexes[button_index]
-        command = 'unpress' if bool(payload[2]) else 'press'
+        command = "unpress" if bool(payload[2]) else "press"
         await self.pages[self.current_page].handle_command(key, command)
 
     async def handle_knob_rotate(self, payload: bytearray):
         button_index = unpack("!H", payload[0:2])[0]
         key = self.button_indexes[button_index]
         right = payload[2] == 1
-        command = 'rotate'
+        command = "rotate"
         await self.pages[self.current_page].handle_command(key, command, right)
 
     async def handle_touch(self, payload: bytearray):
         x_axis = unpack("!H", payload[2:4])[0]
         y_axis = unpack("!H", payload[4:6])[0]
         subscreen_name = self.get_subscreen_name(x_axis, y_axis)
-        await self.pages[self.current_page].handle_command(subscreen_name, 'touch', x_axis, y_axis)
+        await self.pages[self.current_page].handle_command(subscreen_name, "touch", x_axis, y_axis)
 
     async def handle_touch_end(self, payload):
         x_axis = unpack("!H", payload[2:4])[0]
         y_axis = unpack("!H", payload[4:6])[0]
         subscreen_name = self.get_subscreen_name(x_axis, y_axis)
-        await self.pages[self.current_page].handle_command(subscreen_name, 'touch', x_axis, y_axis)
+        await self.pages[self.current_page].handle_command(subscreen_name, "touch", x_axis, y_axis)
 
     async def _debug_print(self, payload):
         ic(payload)

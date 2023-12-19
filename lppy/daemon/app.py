@@ -19,6 +19,8 @@ class Application:
         for device in self.devices:
             if await device.connect():
                 print(f"Device {device.configuration['url']} connected")
+                await device.send_configuration()
+
 
         return [device.read() for device in self.devices] + [device.repaint_task() for device in self.devices]
 
