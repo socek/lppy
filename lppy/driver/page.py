@@ -21,7 +21,9 @@ class Page:
         self.configuration = configuration
         configs = configuration.get("action_resolvers", {})
         for key, action_resolver_configuration in configs.items():
-            self.action_resolvers[key] = translator[key]()
+            plugin = self.device.application.plugins[action_resolver_configuration['plugin']]
+            action_resolver = plugin.get_action_resolvers()[action_resolver_configuration['type']]
+            self.action_resolvers[key] = action_resolver()
             self.action_resolvers[key].setUp(self, key, action_resolver_configuration)
 
     def get_action_resolver(self, name: str):

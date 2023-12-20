@@ -36,6 +36,7 @@ class LPDevice:
     display_mode = None
 
     def __init__(self):
+        self.application = None
         self.configuration = None
         self.conn_configuration = None
         self.reader: StreamReader = None
@@ -46,7 +47,7 @@ class LPDevice:
             Commands.KNOB_ROTATE: self.handle_knob_rotate,
             Commands.TOUCH: self.handle_touch,
             Commands.TOUCH_END: self.handle_touch_end,
-            Commands.FRAMEBUFF: self._debug_print,
+            Commands.FRAMEBUFF: self._ignore_command,  # TODO: make response command validator
         }
         self.screen_buffers = {
             0: self._new_image(),
@@ -56,7 +57,8 @@ class LPDevice:
         self.pages = {}
         self.current_page = "1"
 
-    def setUp(self, configuration: dict):
+    def setUp(self, application, configuration: dict):
+        self.application = application
         self.configuration = configuration
         self.conn_configuration = {"baudrate": 256000, **self.configuration.get("connection", {})}
         for key, page_config in self.configuration["pages"].items():
@@ -172,7 +174,11 @@ class LPDevice:
 
     async def handle_command(self, payload):
         command = payload[0]
-        await self.handlers.get(Commands(command), self._debug_print)(payload[1:])
+        handler = self.handlers.get(Commands(command))
+        if handler:
+            await handler(payload[1:])
+        else:
+            await self._debug_print(payload[1:], Commands(command))
 
     def get_subscreen_name(self, x_axis: int, y_axis: int) -> str | None:
         for name, display in self.subdisplays.items():
@@ -207,10 +213,15 @@ class LPDevice:
         x_axis = unpack("!H", payload[2:4])[0]
         y_axis = unpack("!H", payload[4:6])[0]
         subscreen_name = self.get_subscreen_name(x_axis, y_axis)
-        await self.pages[self.current_page].handle_command(subscreen_name, "touch", x_axis, y_axis)
+        await self.pages[self.current_page].handle_command(
+            subscreen_name, "touch_end", x_axis, y_axis
+        )
 
-    async def _debug_print(self, payload):
-        ic(payload)
+    async def _debug_print(self, payload, command=None):
+        ic(command, payload)
+
+    async def _ignore_command(self, payload):
+        ...
 
 
 class LoupeDeckLive(LPDevice):

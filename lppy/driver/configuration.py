@@ -6,27 +6,33 @@ sample = {
             "pages": {
                 "1": {
                     "action_resolvers": {
-                        "knob1": {
-                            "name": "Spotify",
-                            "type": "pulseaudio:Sink",
-                            "sinkName": "spotify",
-                        },
-                        "knob2": {
-                            "name": "Home",
-                            "type": "pulseaudio:Sink",
-                            "sinkName": "spotify2",
-                        },
+                        # "knob1": {
+                        #     "name": "Spotify",
+                        #     "type": "pulseaudio:Sink",
+                        #     "sinkName": "spotify",
+                        # },
+                        # "knob2": {
+                        #     "name": "Home",
+                        #     "type": "pulseaudio:Sink",
+                        #     "sinkName": "spotify2",
+                        # },
                         "key1": {
                             "name": "Previous",
-                            "type": "spotify:PreviousSong",
+                            "plugin": "runscript",
+                            "type": "exec",
+                            "cmd": "/home/socek/tmp/run1.sh",
                         },
                         "key2": {
                             "name": "Play/Pause",
-                            "type": "spotify:PlayPauseToggle",
+                            "plugin": "runscript",
+                            "type": "exec",
+                            "cmd": "/home/socek/tmp/run2.sh",
                         },
                         "key3": {
                             "name": "Next",
-                            "type": "spotify:NextSong",
+                            "plugin": "runscript",
+                            "type": "exec",
+                            "cmd": "/home/socek/tmp/run3.sh",
                         }
                     }
                 }
