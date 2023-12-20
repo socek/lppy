@@ -82,7 +82,10 @@ class LPDevice:
         ):
             return  # do not repaint the same image
 
-        imageBuff = self.screen_buffers[self.current_buffer].convert(self.display_mode).tobytes()
+        await self.paint_image(self.screen_buffers[self.current_buffer])
+
+    async def paint_image(self, image):
+        imageBuff = image.convert(self.display_mode).tobytes()
         pixelCount = self.width * self.height * 2
         if len(imageBuff) != pixelCount:
             raise RuntimeError(f"Expected buffer length of {pixelCount}, got {len(imageBuff)}!")
@@ -92,13 +95,8 @@ class LPDevice:
             Commands.FRAMEBUFF, bytearray(self.display_id + header + imageBuff)
         )
 
-    async def repaint_task(self):
-        await self.repaint_buffer()
-        while self.state:
-            await sleep(0.1)
-            await self.repaint_buffer()
-
     async def connect(self) -> bool:
+        assert self.configuration
         for _ in range(self.retries):  # trie for 2 times
             try:
                 self.reader, self.writer = await wait_for(
@@ -118,6 +116,7 @@ class LPDevice:
         return False
 
     async def send_configuration(self):
+        assert self.configuration
         brightness = self.configuration.get("brightness")
         if brightness is not None:
             value = pack("B", brightness)
@@ -157,20 +156,6 @@ class LPDevice:
         buff.extend(payload)
         buff[0] = min([0xFF, len(buff)])
         await self.write(buff)
-
-    async def read(self):
-        assert self.reader
-        while self.state:
-            try:
-                result: bytearray = await wait_for(
-                    self.reader.readexactly(3), timeout=self.timeout
-                )
-            except TimeoutError:
-                continue
-            assert result[0] == 130
-            payloud_length = result[1] - 1
-            payload = await wait_for(self.reader.read(payloud_length), timeout=self.timeout)
-            await self.handle_command(payload)
 
     async def handle_command(self, payload):
         command = payload[0]

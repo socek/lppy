@@ -6,6 +6,14 @@ from lppy import plugins
 from lppy.driver.configuration import Configuration
 from lppy.driver.devices import LoupeDeckLive
 from lppy.driver.plugin import LDPlugin
+from lppy.driver.tasks import communicate
+from lppy.driver.tasks import repaint_task
+
+
+def get_all_tasks(devices):
+    for device in devices:
+        yield repaint_task(device)
+        yield communicate(device)
 
 
 class Application:
@@ -33,9 +41,7 @@ class Application:
                 print(f"Device {device.configuration['url']} connected")
                 await device.send_configuration()
 
-        return [device.read() for device in self.devices] + [
-            device.repaint_task() for device in self.devices
-        ]
+        return list(get_all_tasks(self.devices))
 
     def exit_application(self, *args, **kwargs):
         print("\rExiting...")
