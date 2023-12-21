@@ -18,21 +18,18 @@ sample = {
                         # },
                         "key1": {
                             "name": "Previous",
-                            "plugin": "runscript",
-                            "type": "exec",
-                            "cmd": "/home/socek/tmp/run1.sh",
+                            "plugin": "spotify",
+                            "type": "previous",
                         },
                         "key2": {
                             "name": "Play/Pause",
-                            "plugin": "runscript",
-                            "type": "exec",
-                            "cmd": "/home/socek/tmp/run2.sh",
+                            "plugin": "spotify",
+                            "type": "play_pause",
                         },
                         "key3": {
                             "name": "Next",
-                            "plugin": "runscript",
-                            "type": "exec",
-                            "cmd": "/home/socek/tmp/run3.sh",
+                            "plugin": "spotify",
+                            "type": "next",
                         }
                     }
                 }
