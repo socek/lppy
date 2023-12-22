@@ -1,3 +1,8 @@
+from os.path import expanduser
+
+from tomli_w import dump as toml_write
+from tomllib import load as toml_read
+
 sample = {
     "devices": [
         {
@@ -30,10 +35,10 @@ sample = {
                             "name": "Next",
                             "plugin": "spotify",
                             "type": "next",
-                        }
+                        },
                     }
                 }
-            }
+            },
         }
     ]
 }
@@ -46,8 +51,11 @@ class Configuration:
 
     def read(self, path: str) -> dict:
         self.configuration = sample
-        self.path = path
+        self.path = expanduser(path)
+        with open(self.path, "rb") as conffile:
+            self.configuration = toml_read(conffile)
         return self.configuration
 
     def write(self):
-        pass
+        with open(self.path, "wb") as conffile:
+            toml_write(self.configuration, conffile)

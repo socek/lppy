@@ -1,6 +1,7 @@
 from enum import Enum
 
 DISPLAY_IMAGE_MODE = "RGB"
+DEFAULT_CONFIGURATION_PATH = "~/.config/ldpy.toml"
 
 
 class Commands(Enum):

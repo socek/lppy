@@ -76,13 +76,79 @@ class GraphicActionResolver(ActionResolver):
 
 class Knob(GraphicActionResolver):
     async def press(self):
-        ic("press", self.name)
+        ...
 
     async def unpress(self):
-        ic("unpress", self.name)
+        ...
 
     async def rotate(self, right: bool):
-        ic("rotate", self.name, right)
+        ...
+
+
+class CircleKnob(Knob):
+    def get_paint_configuration(self):
+        return {
+            "draw_circle": True,
+            "percentage": 75,
+            "first_circle": 75,
+            "second_circle": 50,
+            "background": "black",
+        }
+
+    def paint_image(self, image: Image) -> Image:
+        assert self.configuration
+        conf = self.get_paint_configuration()
+        draw = ImageDraw.Draw(image)
+        font = ImageFont.truetype("/usr/share/fonts/TTF/Consolas-Regular.ttf", 12)
+        x, y, width, height = self._get_display_box()
+        margin = 10
+        stroke_width = int(width / 2) - margin
+        shape_size = int(min(width, height) * 0.8)
+
+        shape = [(margin, margin), (shape_size, shape_size)]
+
+        if conf.get("backbox_color"):
+            backbox_shape = [(0, 0), (shape_size + margin, shape_size + margin)]
+            draw.rectangle(backbox_shape, fill=conf.get("backbox_color"))
+
+        if conf["draw_circle"]:
+            start = 270
+            draw.arc(shape, start=0, end=360, fill="blue", width=stroke_width)
+            draw.arc(
+                shape,
+                start=start,
+                end=start + (360 * conf["first_circle"] / 100),
+                fill="green",
+                width=stroke_width,
+            )
+            if conf.get("second_circle"):
+                draw.arc(
+                    shape,
+                    start=start,
+                    end=start + (360 * conf["second_circle"] / 100),
+                    fill="red",
+                    width=stroke_width,
+                )
+        texts = [
+            self.configuration["name"],
+            f"{conf['percentage']}",
+        ]
+        if isinstance(conf["percentage"], int):
+            texts[1] += "%"
+
+        if conf.get("additional_text"):
+            texts.append(conf.get("additional_text"))
+
+        text = "\n".join(texts)
+        _, _, text_width, text_height = draw.textbbox((0, 0), text, font=font)
+
+        draw.text(
+            ((width - text_width) / 2, ((height - text_height) / 2) - 15),
+            text,
+            font=font,
+            fill="white",
+            align="center",
+        )
 
 
 class ScreenKey(GraphicActionResolver):

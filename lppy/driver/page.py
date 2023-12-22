@@ -1,15 +1,3 @@
-from lppy.driver.action_resolvers import Knob
-from lppy.driver.action_resolvers import ScreenKey
-
-translator = {
-    "knob1": Knob,
-    "knob2": Knob,
-    "key1": ScreenKey,
-    "key2": ScreenKey,
-    "key3": ScreenKey,
-}
-
-
 class Page:
     def __init__(self):
         self.device = None
@@ -21,8 +9,8 @@ class Page:
         self.configuration = configuration
         configs = configuration.get("action_resolvers", {})
         for key, action_resolver_configuration in configs.items():
-            plugin = self.device.application.plugins[action_resolver_configuration['plugin']]
-            action_resolver = plugin.get_action_resolvers()[action_resolver_configuration['type']]
+            plugin = self.device.application.plugins[action_resolver_configuration["plugin"]]
+            action_resolver = plugin.get_action_resolvers()[action_resolver_configuration["type"]]
             self.action_resolvers[key] = action_resolver()
             self.action_resolvers[key].setUp(self, key, action_resolver_configuration)
 

@@ -290,37 +290,37 @@ class LoupeDeckLive(LPDevice):
         "knob1": {
             "x": 0,
             "y": 0,
-            "width": 64,
+            "width": 60,
             "height": 90,
         },
         "knob2": {
             "x": 0,
             "y": 91,
-            "width": 64,
+            "width": 60,
             "height": 90,
         },
         "knob3": {
             "x": 0,
             "y": 181,
-            "width": 64,
+            "width": 60,
             "height": 90,
         },
-        "knob1": {
-            "x": 425,
+        "knob4": {
+            "x": 420,
             "y": 0,
-            "width": 64,
+            "width": 60,
             "height": 90,
         },
-        "knob2": {
-            "x": 425,
+        "knob5": {
+            "x": 420,
             "y": 91,
-            "width": 64,
+            "width": 60,
             "height": 90,
         },
-        "knob3": {
-            "x": 425,
+        "knob6": {
+            "x": 420,
             "y": 181,
-            "width": 64,
+            "width": 60,
             "height": 90,
         },
     }

@@ -1,9 +1,10 @@
-import os.path
-import pkgutil
 from importlib import import_module
+from os.path import dirname
+from pkgutil import iter_modules
 
 from lppy import plugins
 from lppy.driver.configuration import Configuration
+from lppy.driver.consts import DEFAULT_CONFIGURATION_PATH
 from lppy.driver.devices import LoupeDeckLive
 from lppy.driver.plugin import LDPlugin
 from lppy.driver.tasks import communicate
@@ -23,7 +24,7 @@ class Application:
         self.plugins = {}
 
     async def init(self):
-        configuration = self.configuration.read(None)
+        configuration = self.configuration.read(DEFAULT_CONFIGURATION_PATH)
         self.devices = []
 
         for plugin_class in get_plugins():
@@ -50,8 +51,8 @@ class Application:
 
 
 def get_plugins():
-    pkgpath = os.path.dirname(plugins.__file__)
-    names = [name for _, name, _ in pkgutil.iter_modules([pkgpath])]
+    pkgpath = dirname(plugins.__file__)
+    names = [name for _, name, _ in iter_modules([pkgpath])]
     for name in names:
         try:
             module = import_module(f"lppy.plugins.{name}.plugin")
