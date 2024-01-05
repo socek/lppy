@@ -6,6 +6,7 @@ from struct import pack
 from struct import unpack
 
 from PIL import Image
+from serial.serialutil import SerialException
 from serial_asyncio import open_serial_connection
 
 from lppy.driver.action_resolvers import GraphicActionResolver
@@ -34,6 +35,11 @@ class LPDevice:
     retries = 2
     state = True
     display_mode = None
+
+    @property
+    def name(self):
+        assert self.configuration
+        return self.configuration["url"]
 
     def __init__(self):
         self.application = None
@@ -113,6 +119,11 @@ class LPDevice:
                 return response == HANDSHAKE_RESPONSE
             except TimeoutError:
                 print("Connection not responding, trying again...")
+            except SerialException:
+                print(f"Filename does not exists {self.configuration['url']}")
+                self.state = False
+                return False
+        self.state = False
         return False
 
     async def send_configuration(self):

@@ -11,43 +11,56 @@ from lppy.driver.tasks import communicate
 from lppy.driver.tasks import repaint_task
 
 
-def get_all_tasks(devices):
-    for device in devices:
-        yield repaint_task(device)
-        yield communicate(device)
-
-
 class Application:
     def __init__(self):
-        self.devices: list | None = None
         self.configuration: Configuration = Configuration()
         self.plugins = {}
+        self.devices = {}
+        self.state = False
 
     async def init(self):
-        configuration = self.configuration.read(DEFAULT_CONFIGURATION_PATH)
-        self.devices = []
+        self.plugins = {}
+        self.devices = {}
+        self._configuration = self.configuration.read(DEFAULT_CONFIGURATION_PATH)
 
         for plugin_class in get_plugins():
             plugin = plugin_class()
-            plugin.setUp(self, configuration)
+            plugin.setUp(self, self._configuration)
             self.plugins[plugin.name] = plugin
 
-        for conf in configuration.get("devices", []):
+        self.state = True
+
+    def configure_new_devices(self):
+        for conf in self._configuration.get("devices", []):
             lp = LoupeDeckLive()
             lp.setUp(self, conf)
-            self.devices.append(lp)
-
-        for device in self.devices:
-            if await device.connect():
-                print(f"Device {device.configuration['url']} connected")
-                await device.send_configuration()
-
-        return list(get_all_tasks(self.devices))
+            if lp.name in self.devices and self.devices[lp.name].state:
+                continue
+            self.devices[lp.name] = lp
+            yield lp
 
     def exit_application(self, *args, **kwargs):
         print("\rExiting...")
-        for device in self.devices or []:
+        for device in self.devices.values() or []:
             device.state = False
+        self.state = False
+
+    def get_all_tasks(self, devices):
+        for device in devices:
+            yield repaint_task(device)
+            yield communicate(device)
+
+    def remove_device(self, lp: LoupeDeckLive):
+        if lp.name in self.devices:
+            del self.devices[lp.name]
+
+    async def start_devices_tasks(self):
+        for device in self.configure_new_devices():
+            if await device.connect():
+                print(f"Device {device.configuration['url']} connected")
+                await device.send_configuration()
+                yield repaint_task(device)
+                yield communicate(device)
 
 
 def get_plugins():
