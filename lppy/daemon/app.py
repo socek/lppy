@@ -1,10 +1,19 @@
+from asyncio import TaskGroup
+from asyncio import ensure_future
+from asyncio import get_event_loop
+from asyncio import sleep
 from importlib import import_module
 from os.path import dirname
 from pkgutil import iter_modules
+from signal import SIGINT
+from signal import SIGTERM
+from signal import SIGUSR1
+from signal import signal
 
 from lppy import plugins
 from lppy.driver.configuration import Configuration
 from lppy.driver.consts import DEFAULT_CONFIGURATION_PATH
+from lppy.driver.consts import State
 from lppy.driver.devices import LoupeDeckLive
 from lppy.driver.plugin import LDPlugin
 from lppy.driver.tasks import communicate
@@ -16,19 +25,7 @@ class Application:
         self.configuration: Configuration = Configuration()
         self.plugins = {}
         self.devices = {}
-        self.state = False
-
-    async def init(self):
-        self.plugins = {}
-        self.devices = {}
-        self._configuration = self.configuration.read(DEFAULT_CONFIGURATION_PATH)
-
-        for plugin_class in get_plugins():
-            plugin = plugin_class()
-            plugin.setUp(self, self._configuration)
-            self.plugins[plugin.name] = plugin
-
-        self.state = True
+        self.state = State.BEFORE_START
 
     def configure_new_devices(self):
         for conf in self._configuration.get("devices", []):
@@ -38,12 +35,6 @@ class Application:
                 continue
             self.devices[lp.name] = lp
             yield lp
-
-    def exit_application(self, *args, **kwargs):
-        print("\rExiting...")
-        for device in self.devices.values() or []:
-            device.state = False
-        self.state = False
 
     def get_all_tasks(self, devices):
         for device in devices:
@@ -61,6 +52,48 @@ class Application:
                 await device.send_configuration()
                 yield repaint_task(device)
                 yield communicate(device)
+
+    def refresh(self):
+        print("Initializing...")
+        self.plugins = {}
+        self.devices = {}
+        self._configuration = self.configuration.read(DEFAULT_CONFIGURATION_PATH)
+
+        for plugin_class in get_plugins():
+            plugin = plugin_class()
+            plugin.setUp(self, self._configuration)
+            self.plugins[plugin.name] = plugin
+
+        self.state = State.RUNNING
+
+    def init(self):
+        for signalCode in [SIGINT, SIGTERM]:
+            signal(signalCode, self.exit_application)
+        signal(SIGUSR1, self.restart)
+
+    def exit_application(self, *args, **kwargs):
+        print("\rExiting...")
+        self.state = State.EXITING
+        for device in self.devices.values() or []:
+            device.state = False
+
+    def restart(self, *args, **kwargs):
+        for device in self.devices.values() or []:
+            device.state = False
+        self.state = State.RESTART
+
+    async def run_all_tasks(self):
+        async with TaskGroup() as tg:
+            while self.state == State.RUNNING:
+                async for task in self.start_devices_tasks():
+                    tg.create_task(task)
+                await sleep(1)
+
+    def main(self):
+        self.init()
+        while self.state in (State.BEFORE_START, State.RUNNING, State.RESTART):
+            self.refresh()
+            get_event_loop().run_until_complete(ensure_future(self.run_all_tasks()))
 
 
 def get_plugins():

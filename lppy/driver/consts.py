@@ -20,3 +20,10 @@ class Commands(Enum):
     TOUCH_CT = 0x52
     TOUCH_END = 0x6D
     TOUCH_END_CT = 0x72
+
+
+class State(Enum):
+    BEFORE_START = "before_start"
+    RUNNING = "running"
+    RESTART = "restart"
+    EXITING = "exiting"
