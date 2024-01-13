@@ -150,6 +150,12 @@ class CircleKnob(Knob):
             align="center",
         )
 
+    async def touch(self, x_axis: int, y_axis: int):
+        pass
+
+    async def touch_end(self, x_axis: int, y_axis: int):
+        pass
+
 
 class ScreenKey(GraphicActionResolver):
     HOVER_TIMOUT = 0.1

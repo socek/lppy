@@ -16,9 +16,10 @@ def get_sink_by_name(name):
         if sink.name == name:
             yield sink
 
+
 def get_sink_by_application_name(name):
     for sink in pulse.sink_input_list():
-        if sink.proplist.get('application.name') == name:
+        if sink.proplist.get("application.name") == name:
             yield sink
 
 
