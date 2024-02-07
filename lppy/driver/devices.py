@@ -2,6 +2,7 @@ from asyncio import StreamReader
 from asyncio import StreamWriter
 from asyncio import sleep
 from asyncio import wait_for
+from os.path import exists
 from struct import pack
 from struct import unpack
 
@@ -38,15 +39,15 @@ class LPDevice:
 
     @property
     def name(self):
-        assert self.configuration
-        return self.configuration["url"]
+        assert self.url
+        return self.url
 
     def __init__(self):
         self.application = None
         self.configuration = None
         self.conn_configuration = None
-        self.reader: StreamReader = None
-        self.writer: StreamWriter = None
+        self.reader: StreamReader | None = None
+        self.writer: StreamWriter | None = None
         self.transaction_id = 0
         self.handlers = {
             Commands.BUTTON_PRESS: self.handle_button_press,
@@ -62,8 +63,10 @@ class LPDevice:
         self.current_buffer = 0
         self.pages = {}
         self.current_page = "1"
+        self.url: str | None = None
 
-    def setUp(self, application, configuration: dict):
+    def setUp(self, application, configuration: dict, url: str):
+        self.url = url
         self.application = application
         self.configuration = configuration
         self.conn_configuration = {"baudrate": 256000, **self.configuration.get("connection", {})}
@@ -71,6 +74,9 @@ class LPDevice:
             page = Page()
             page.setUp(self, page_config)
             self.pages[key] = page
+
+    def connection_exists(self):
+        return self.url and exists(self.url)
 
     def _new_image(self):
         return Image.new(DISPLAY_IMAGE_MODE, (self.width, self.height), "black")
@@ -106,9 +112,7 @@ class LPDevice:
         for _ in range(self.retries):  # trie for 2 times
             try:
                 self.reader, self.writer = await wait_for(
-                    open_serial_connection(
-                        url=self.configuration["url"], **self.conn_configuration
-                    ),
+                    open_serial_connection(url=self.url, **self.conn_configuration),
                     timeout=self.timeout,
                 )
                 self.writer.write(HANDSHAKE)
@@ -120,7 +124,7 @@ class LPDevice:
             except TimeoutError:
                 print("Connection not responding, trying again...")
             except SerialException:
-                print(f"Filename does not exists {self.configuration['url']}")
+                print(f"Filename does not exists {self.url}")
                 self.state = False
                 return False
         self.state = False

@@ -30,8 +30,11 @@ class Application:
     def configure_new_devices(self):
         for conf in self._configuration.get("devices", []):
             lp = LoupeDeckLive()
-            lp.setUp(self, conf)
+            lp_config = self._configuration.get("configs", {}).get(conf.get("config"), {})
+            lp.setUp(self, lp_config, conf["url"])
             if lp.name in self.devices and self.devices[lp.name].state:
+                continue
+            if not lp.connection_exists():
                 continue
             self.devices[lp.name] = lp
             yield lp
@@ -48,7 +51,7 @@ class Application:
     async def start_devices_tasks(self):
         for device in self.configure_new_devices():
             if await device.connect():
-                print(f"Device {device.configuration['url']} connected")
+                print(f"Device {device.url} connected")
                 await device.send_configuration()
                 yield repaint_task(device)
                 yield communicate(device)

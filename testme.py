@@ -8,5 +8,4 @@ ic.configureOutput(includeContext=True)
 
 
 if __name__ == "__main__":
-    app = Application()
-    app.main()
+     Application().main()
