@@ -10,7 +10,6 @@ from PIL import Image
 from serial.serialutil import SerialException
 from serial_asyncio import open_serial_connection
 
-from lppy.driver.action_resolvers import GraphicActionResolver
 from lppy.driver.consts import DISPLAY_IMAGE_MODE
 from lppy.driver.consts import Commands
 from lppy.driver.page import Page
@@ -36,6 +35,9 @@ class LPDevice:
     retries = 2
     state = True
     display_mode = None
+    subdisplays = {}
+    button_indexes = {}
+    buttons: list[str] = []
 
     @property
     def name(self):
@@ -136,6 +138,7 @@ class LPDevice:
         if brightness is not None:
             value = pack("B", brightness)
             await self.write_command(Commands.SET_BRIGHTNESS, bytearray(value))
+        await self.refresh_button_color()
 
     async def write(
         self,
@@ -222,6 +225,17 @@ class LPDevice:
 
     async def _ignore_command(self, payload):
         ...
+
+    async def refresh_button_color(self):
+        for button_name in self.buttons:
+            button = self.pages[self.current_page].action_resolvers.get(button_name)
+            color = button.get_color() if button else [0, 0, 0]
+            index = self.get_index(button_name)
+            payload = bytearray([index] + color)
+            await self.write_command(Commands.SET_COLOR, payload)
+
+    def get_index(self, name):
+        return {v: k for k, v in self.button_indexes.items()}[name]
 
 
 class LoupeDeckLive(LPDevice):
@@ -356,3 +370,13 @@ class LoupeDeckLive(LPDevice):
         13: "button6",
         14: "button7",
     }
+
+    buttons = [
+        "button1",
+        "button2",
+        "button3",
+        "button4",
+        "button5",
+        "button6",
+        "button7",
+    ]

@@ -13,7 +13,7 @@ class ActionResolver:
 
     def __init__(self):
         self.page = None
-        self.name = None
+        self.name: str | None = None
         self.configuration = None
 
     def setUp(self, page, name, configuration):
@@ -23,6 +23,28 @@ class ActionResolver:
 
 
 class Button(ActionResolver):
+    def get_active_color(self):
+        return [0, 102, 255]
+
+    def get_inactive_color(self):
+        return [255, 102, 0]
+
+    def get_color(self):
+        assert self.page
+        assert self.page.device
+        assert self.name
+        page_number = self.name[6:]
+        if page_number == self.page.device.current_page:
+            return self.get_active_color()
+        else:
+            return self.get_inactive_color()
+
+    def get_index(self):
+        assert self.page
+        assert self.page.device
+        inv_map = {v: k for k, v in self.page.device.button_indexes.items()}
+        return inv_map[self.name]
+
     async def press(self):
         ic("press", self.name)
 
