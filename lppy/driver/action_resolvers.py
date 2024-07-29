@@ -21,6 +21,9 @@ class ActionResolver:
         self.name = name
         self.configuration = configuration
 
+    async def reset(self):
+        pass
+
 
 class Button(ActionResolver):
     def get_active_color(self):
@@ -181,6 +184,7 @@ class CircleKnob(Knob):
 
 class ScreenKey(GraphicActionResolver):
     HOVER_TIMOUT = 0.1
+    HOVER_FAIL_TIMEOUT = 3
 
     def __init__(self):
         super().__init__()
@@ -195,6 +199,7 @@ class ScreenKey(GraphicActionResolver):
         cooldown = self.last_touch_end and self.last_touch_end > datetime.utcnow() - timedelta(
             seconds=self.HOVER_TIMOUT
         )
+
         if first_touch or touching or cooldown:
             return {
                 "background": "blue",
@@ -208,3 +213,7 @@ class ScreenKey(GraphicActionResolver):
 
     async def touch_end(self, x_axis: int, y_axis: int):
         self.last_touch_end = datetime.utcnow()
+
+    async def reset(self):
+        self.last_touch = None
+        self.last_touch_end = None

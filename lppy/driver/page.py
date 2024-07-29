@@ -23,6 +23,11 @@ class Page:
                 yield value
 
     async def handle_command(self, key, action, *payload):
+        for ar_key, value in self.action_resolvers.items():
+            if ar_key == key:
+                continue
+            await value.reset()
+
         resolver = self.action_resolvers.get(key)
         if not resolver:
             return
