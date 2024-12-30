@@ -1,6 +1,5 @@
 from typing import Optional
 
-from icecream import ic
 from obswebsocket import obsws
 from obswebsocket import requests
 from obswebsocket.exceptions import ConnectionFailure

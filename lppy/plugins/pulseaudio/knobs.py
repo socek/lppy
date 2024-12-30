@@ -65,7 +65,6 @@ class VolumeCK(CircleKnob):
                 conf["backbox_color"] = "red"
                 conf["additional_text"] = "MUTED"
             return conf
-
         return {
             "draw_circle": False,
             "percentage": "(off)",

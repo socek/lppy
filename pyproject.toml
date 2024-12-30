@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 pyserial-asyncio = "^0.6"
-pillow = "^10.1.0"
+pillow = "^11.0.0"
 pydbus = "^0.6.0"
 pycairo = "^1.25.1"
 pygobject = "^3.46.0"
