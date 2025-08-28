@@ -38,6 +38,10 @@ class LPDevice:
     subdisplays = {}
     button_indexes = {}
     buttons: list[str] = []
+    width: int
+    height: int
+    display_id: bytes
+    conn_configuration: dict | None
 
     @property
     def name(self):
@@ -71,7 +75,7 @@ class LPDevice:
         self.url = url
         self.application = application
         self.configuration = configuration
-        self.conn_configuration = {"baudrate": 256000, **self.configuration.get("connection", {})}
+        self.conn_configuration = {**self.configuration.get("connection", {})}
         for key, page_config in self.configuration["pages"].items():
             page = Page()
             page.setUp(self, page_config)

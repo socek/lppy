@@ -49,12 +49,16 @@ class Application:
             del self.devices[lp.name]
 
     async def start_devices_tasks(self):
+        device_found = False
         for device in self.configure_new_devices():
             if await device.connect():
                 print(f"Device {device.url} connected")
+                device_found = True
                 await device.send_configuration()
                 yield repaint_task(device)
                 yield communicate(device)
+        if not device_found:
+            print("No device found!")
 
     def refresh(self):
         print("Initializing...")

@@ -1,4 +1,5 @@
 from subprocess import STDOUT
+from subprocess import CalledProcessError
 from subprocess import TimeoutExpired
 from subprocess import check_output
 
