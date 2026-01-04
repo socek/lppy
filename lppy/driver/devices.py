@@ -10,6 +10,7 @@ from PIL import Image
 from serial.serialutil import SerialException
 from serial_asyncio import open_serial_connection
 
+from lppy.driver.action_resolvers import NothingToPaint
 from lppy.driver.consts import DISPLAY_IMAGE_MODE
 from lppy.driver.consts import Commands
 from lppy.driver.page import Page
@@ -88,11 +89,15 @@ class LPDevice:
         return Image.new(DISPLAY_IMAGE_MODE, (self.width, self.height), "black")
 
     async def repaint_buffer(self):
+        old_buffer = self.screen_buffers[self.current_buffer]
         self.current_buffer = (self.current_buffer + 1) % 2
         self.screen_buffers[self.current_buffer] = self._new_image()
         for resolver in self.pages[self.current_page].get_all_graphic_resolvers():
             image, box = resolver.draw_image()
-            self.screen_buffers[self.current_buffer].paste(image, box)
+            if image:
+                self.screen_buffers[self.current_buffer].paste(image, box)
+            else:
+                self.screen_buffers[self.current_buffer].paste(old_buffer.crop(box), box)
 
         if (
             self.screen_buffers[self.current_buffer]

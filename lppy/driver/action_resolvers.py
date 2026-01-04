@@ -8,6 +8,9 @@ from PIL import ImageFont
 from lppy.driver.consts import DISPLAY_IMAGE_MODE
 
 
+class NothingToPaint(Exception): pass
+
+
 class ActionResolver:
     can_be_painted = False
 
@@ -58,6 +61,10 @@ class Button(ActionResolver):
 class GraphicActionResolver(ActionResolver):
     can_be_painted = True
 
+    def __init__(self):
+        super().__init__()
+        self._old_configuration = None
+
     def get_paint_configuration(self):
         return {
             "background": "black",
@@ -92,10 +99,14 @@ class GraphicActionResolver(ActionResolver):
 
     def draw_image(self):
         conf = self.get_paint_configuration()
+
         x, y, width, height = self._get_display_box()
+        if conf == self._old_configuration:
+            return None, (x, y, x + width, y + height)
 
         image = Image.new(DISPLAY_IMAGE_MODE, (width, height), color=conf["background"])
         self.paint_image(image)
+        self._old_configuration = conf
         return image, (x, y, x + width, y + height)
 
 
